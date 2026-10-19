@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+
+<html class="dark scroll-smooth" lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cyber Elegance - Interactive Portfolio &amp; 3D ID Card</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Lucide Icons CDN -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              DEFAULT: '#0d0e13',
+              card: '#121318',
+              surface: '#181a22',
+              border: '#262935',
+            },
+            theme: {
+              cyan: '#00f0ff',
+              purple: '#b026ff',
+              emerald: '#00ff9d',
+              sunset: '#ff3366',
+              gold: '#ffd000'
+            }
+          },
+          animation: {
+            'lanyard-sway': 'lanyardSway 6s ease-in-out infinite alternate',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'scanline': 'scanline 8s linear infinite',
+            'shimmer': 'shimmer 2.5s infinite',
+          },
+          keyframes: {
+            lanyardSway: {
+              '0%': { transform: 'rotate(-1.5deg)' },
+              '100%': { transform: 'rotate(1.5deg)' }
+            },
+            scanline: {
+              '0%': { transform: 'translateY(-100%)' },
+              '100%': { transform: 'translateY(1000%)' }
+            },
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(200%)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom 3D & Hologram Styles */
+    :root {
+      --primary-neon: #00f0ff;
+      --primary-glow: rgba(0, 240, 255, 0.45);
+      --primary-dim: rgba(0, 240, 255, 0.12);
+    }
+
+    body {
+      background-color: #08090d;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+
+    /* Draggable hanging card */
+    #card-hanger { touch-action: none; }
+    body.is-dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+    #swing-assembly { transform-origin: top center; }
+    #strap-left, #strap-right { transform-origin: top center; }
+
+    /* Cyber Grid Background */
+    .cyber-grid {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+
+    /* 3D Perspective Canvas */
+    .perspective-container {
+      perspective: 1200px;
+    }
+
+    .card-hanger {
+      transform-origin: top center;
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: transform;
+    }
+
+    .card-flipper {
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card-flipper.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Holographic Foil Reflection */
+    .hologram-effect {
+      background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.12) 30%,
+        rgba(0, 240, 255, 0.25) 45%,
+        rgba(176, 38, 255, 0.25) 55%,
+        rgba(255, 255, 255, 0.15) 70%,
+        transparent 80%
+      );
+      background-size: 250% 250%;
+      mix-blend-mode: color-dodge;
+      transition: background-position 0.1s ease;
+      pointer-events: none;
+    }
+
+    /* Metallic Lanyard Ribbon */
+    .lanyard-strap {
+      background: repeating-linear-gradient(
+        45deg,
+        #151722,
+        #151722 8px,
+        #1d2030 8px,
+        #1d2030 16px
+      );
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Glassmorphism Classes */
+    .glass-card {
+      background: rgba(18, 19, 24, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .glass-panel {
+      background: rgba(14, 15, 20, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Dynamic Theme Overrides */
+    .theme-glow-border {
+      border-color: var(--primary-glow);
+      box-shadow: 0 0 35px -5px var(--primary-glow);
+    }
+
+    .text-neon {
+      color: var(--primary-neon);
+      text-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .bg-neon {
+      background-color: var(--primary-neon);
+    }
+
+    .border-neon {
+      border-color: var(--primary-neon);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0e13;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272a38;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-neon);
+    }
+
+    /* ================= LIGHT THEME OVERRIDES ================= */
+    html.light body {
+      background-color: #eef2f7;
+      color: #0f172a;
+    }
+
+    html.light .cyber-grid {
+      background-image:
+        linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+    }
+
+    html.light .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
+    html.light .glass-panel {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+
+    html.light .text-white { color: #0f172a; }
+    html.light .text-gray-300 { color: #334155; }
+    html.light .text-gray-400 { color: #475569; }
+    html.light .text-gray-500 { color: #64748b; }
+
+    html.light .bg-white\/5 { background-color: rgba(15, 23, 42, 0.04); }
+    html.light .bg-white\/10 { background-color: rgba(15, 23, 42, 0.06); }
+    html.light .bg-white\/15 { background-color: rgba(15, 23, 42, 0.08); }
+    html.light .bg-white\/20 { background-color: rgba(15, 23, 42, 0.1); }
+    html.light .bg-black\/30 { background-color: rgba(15, 23, 42, 0.04); }
+    html.light .bg-black\/40 { background-color: rgba(15, 23, 42, 0.05); }
+    html.light .bg-black\/20 { background-color: rgba(15, 23, 42, 0.03); }
+    html.light .bg-obsidian-surface { background-color: #e2e8f0; }
+    html.light .bg-obsidian-border { background-color: #cbd5e1; }
+
+    html.light .border-white\/5 { border-color: rgba(15, 23, 42, 0.06); }
+    html.light .border-white\/10 { border-color: rgba(15, 23, 42, 0.1); }
+    html.light .border-white\/15 { border-color: rgba(15, 23, 42, 0.12); }
+    html.light .border-white\/20 { border-color: rgba(15, 23, 42, 0.15); }
+
+    html.light .hover\:text-white:hover { color: #0f172a; }
+    html.light .hover\:bg-white\/10:hover { background-color: rgba(15, 23, 42, 0.08); }
+    html.light .hover\:bg-white\/5:hover { background-color: rgba(15, 23, 42, 0.05); }
+
+    /* Keep barcode lines dark & readable on light card */
+    html.light .barcode .bg-white { background-color: #0f172a; }
+
+    html.light ::-webkit-scrollbar-track { background: #eef2f7; }
+    html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+
+    /* ================= ANIMATED CYBERPUNK BACKGROUND ================= */
+    /* Endless scrolling neon grid */
+    @keyframes grid-scroll {
+      from { background-position: 0 0, 0 0; }
+      to   { background-position: 0 40px, 40px 0; }
+    }
+    .cyber-grid {
+      background-size: 40px 40px, 40px 40px;
+      animation: grid-scroll 4s linear infinite;
+    }
+
+    /* Slowly floating ambient orbs */
+    @keyframes orb-drift-a {
+      0%   { transform: translate3d(0, 0, 0) scale(1); }
+      50%  { transform: translate3d(90px, 70px, 0) scale(1.15); }
+      100% { transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes orb-drift-b {
+      0%   { transform: translate3d(0, 0, 0) scale(1); }
+      50%  { transform: translate3d(-110px, -60px, 0) scale(1.1); }
+      100% { transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes orb-drift-c {
+      0%   { transform: translate3d(0, 0, 0) scale(1); }
+      50%  { transform: translate3d(70px, -90px, 0) scale(1.2); }
+      100% { transform: translate3d(0, 0, 0) scale(1); }
+    }
+    #orb-1 { animation: orb-drift-a 18s ease-in-out infinite; }
+    #orb-2 { animation: orb-drift-b 24s ease-in-out infinite; }
+    #orb-3 { animation: orb-drift-c 21s ease-in-out infinite; }
+
+    /* Animated particle network canvas */
+    #cyber-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.75;
+      transition: opacity 0.7s ease;
+    }
+    html.light #cyber-canvas { opacity: 0.4; }
+
+    /* CRT scanline + vignette overlay */
+    .cyber-scanlines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background:
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0px, rgba(0, 0, 0, 0.16) 1px, transparent 1px, transparent 3px);
+      mix-blend-mode: overlay;
+      opacity: 0.5;
+    }
+    /* Sweeping horizontal scan beam */
+    @keyframes scan-sweep {
+      0%   { transform: translateY(-20vh); opacity: 0; }
+      10%  { opacity: 0.7; }
+      90%  { opacity: 0.7; }
+      100% { transform: translateY(120vh); opacity: 0; }
+    }
+    .cyber-scanbeam {
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 140px;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--primary-glow), transparent);
+      opacity: 0.18;
+      animation: scan-sweep 7s linear infinite;
+    }
+    html.light .cyber-scanlines { opacity: 0.18; }
+    html.light .cyber-scanbeam { opacity: 0.08; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cyber-grid, #orb-1, #orb-2, #orb-3, .cyber-scanbeam { animation: none !important; }
+    }
+
+    /* ================= IMAGE LIGHTBOX ================= */
+    .exp-media { cursor: zoom-in; }
+    #image-lightbox { transition: opacity 0.25s ease; }
+    #image-lightbox.is-open { opacity: 1; }
+    @keyframes lightbox-pop {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    #image-lightbox.is-open .lightbox-frame { animation: lightbox-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  </style>
+</head>
+<body class="cyber-grid min-h-screen relative selection:bg-cyan-500/30 selection:text-cyan-300">
+<!-- Ambient Animated Cyberpunk Background -->
+<canvas aria-hidden="true" id="cyber-canvas"></canvas>
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+<div class="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-[140px] opacity-25 transition-all duration-700" id="orb-1" style="background-color: var(--primary-neon);"></div>
+<div class="absolute top-1/2 -right-40 w-[500px] h-[500px] rounded-full blur-[160px] opacity-20 transition-all duration-700" id="orb-2" style="background-color: #b026ff;"></div>
+<div class="absolute bottom-0 left-1/3 w-80 h-80 rounded-full blur-[130px] opacity-15 bg-blue-600" id="orb-3"></div></div>
+<div aria-hidden="true" class="cyber-scanlines"></div>
+<div aria-hidden="true" class="cyber-scanbeam"></div>
+<!-- NAVIGATION HEADER -->
+<nav class="sticky top-0 z-50 glass-panel border-b border-white/5 py-4 px-6 md:px-12 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-3">
+<div class="relative w-9 h-9 rounded-lg bg-obsidian-surface border border-white/20 flex items-center justify-center font-bold font-mono text-neon">
+<i class="w-5 h-5" data-lucide="terminal"></i>
+<div class="absolute -inset-0.5 rounded-lg bg-neon blur-sm -z-10 opacity-40"></div>
+</div>
+<div>
+<span class="font-bold tracking-wider text-base md:text-lg uppercase">ALVITHO<span class="text-neon"> SIPAYUNG</span></span>
+<span class="hidden md:inline-block text-xs font-mono px-2 py-0.5 ml-2 rounded bg-white/5 text-gray-400 border border-white/10">v3.2_CYBER</span>
+</div>
+</div>
+<!-- Nav Links -->
+<div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+<a class="hover:text-neon transition" href="#hero-section">ID Card Live</a>
+<a class="hover:text-neon transition" href="#about">Tentang Saya</a>
+<a class="hover:text-neon transition" href="#projects">Proyek Unggulan</a>
+<a class="hover:text-neon transition" href="#experience">Pengalaman</a>
+<a class="hover:text-neon transition" href="#contact">Kontak</a>
+</div>
+<!-- Quick Status Badge -->
+<div class="flex items-center gap-3">
+<button aria-label="Ganti mode terang/gelap" class="px-3 py-1.5 rounded-lg border border-white/20 hover:border-neon bg-white/5 hover:bg-white/10 text-gray-300 hover:text-neon transition flex items-center" id="btn-theme-toggle" title="Ganti Mode Terang / Gelap">
+<span id="theme-toggle-icon" class="flex items-center"><i class="w-3.5 h-3.5" data-lucide="moon"></i></span>
+</button>
+<div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-400 -ml-3"></span>
+<span>AVAILABLE FOR HIRE</span>
+</div>
+<button class="px-4 py-1.5 rounded-lg border border-white/20 hover:border-neon bg-white/5 hover:bg-white/10 text-xs font-mono transition flex items-center gap-1.5" id="btn-open-editor" type="button">
+<i class="w-3.5 h-3.5" data-lucide="sliders"></i>
+<span>Live Editor</span>
+</button>
+</div>
+</nav>
+<!-- MAIN CONTENT CONTAINER -->
+<main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 space-y-24">
+<!-- HERO SECTION WITH INTERACTIVE 3D HANGING ID CARD -->
+<section class="pt-6 md:pt-12" id="hero-section">
+<!-- Section Tagline -->
+<div class="text-center max-w-3xl mx-auto mb-10 space-y-3">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300 mb-1">
+<i class="w-3.5 h-3.5 text-neon" data-lucide="sparkles"></i>
+<span>CYBERPUNK ELEGANCE • 3D VIRTUAL BADGE</span>
+</div>
+<h1 class="text-4xl md:text-6xl font-bold tracking-tight text-white">
+          Creative Developer &amp; <br class="hidden sm:inline"/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">UI/UX Cyber Architect</span>
+</h1>
+<p class="text-gray-400 text-sm md:text-base leading-relaxed">
+          Eksplorasi kartu identitas virtual 3D interaktif yang menggantung nyata di bawah ini. Gerakkan kursor untuk efek ayunan &amp; kemiringan (tilt), atau balikkan kartu untuk membaca data chip &amp; QR code.
+        </p>
+</div>
+<!-- GRID: 3D ID CARD DISPLAY (FULL WIDTH) -->
+<div class="grid grid-cols-1 gap-8 items-start">
+<!-- LEFT COLUMN: 3D HANGING LANYARD & ID CARD DISPLAY -->
+<div class="w-full flex flex-col items-center justify-start relative pt-2" id="card-stage">
+<!-- Lanyard Anchor point (Top Ceiling Hook) -->
+<div class="w-12 h-4 rounded-b-md bg-gradient-to-b from-gray-700 to-gray-900 border-x border-b border-gray-600 shadow-lg relative z-20 flex justify-center items-center" id="hook">
+<div class="w-3 h-1.5 rounded-full bg-black/60"></div>
+</div>
+<!-- Cross lanyard: two dynamic straps that cross (X) and stretch when the card is dragged -->
+<div class="absolute inset-0 z-10 pointer-events-none overflow-visible" id="rope-layer">
+<div class="lanyard-strap absolute origin-top w-5 rounded-sm flex items-center justify-center overflow-hidden border-x border-white/10 shadow-lg" id="strap-left" style="height:0;left:0;top:0;">
+<span class="text-[9px] font-mono tracking-widest text-white/40 uppercase rotate-90 whitespace-nowrap font-bold">CYBER SEC // PASS</span>
+</div>
+<div class="lanyard-strap absolute origin-top w-5 rounded-sm flex items-center justify-center overflow-hidden border-x border-white/10 shadow-lg" id="strap-right" style="height:0;left:0;top:0;">
+<span class="text-[9px] font-mono tracking-widest text-white/40 uppercase -rotate-90 whitespace-nowrap font-bold">VERIFIED VIP DEV</span>
+</div>
+</div>
+<!-- SWING ASSEMBLY: card + clip, draggable as one hanging unit -->
+<div class="relative z-30 flex flex-col items-center origin-top will-change-transform" id="swing-assembly">
+<!-- Spacer keeps the lanyard hanging length -->
+<div aria-hidden="true" class="h-36 w-40 -mt-1 pointer-events-none select-none"></div>
+<!-- 3D PERSPECTIVE WRAPPER (Handles Physics Tilt & Swing) -->
+<div class="perspective-container relative w-full flex justify-center -mt-2" id="perspective-wrapper">
+<div class="card-hanger relative w-[320px] sm:w-[350px] cursor-grab active:cursor-grabbing" id="card-hanger">
+<!-- Clip Hole on the Card Body (Integrated slot) -->
+<div class="w-full flex justify-center relative z-30 mb-[-14px]" id="clip-wrap">
+<!-- Metal eyelet the lanyard threads through, tying strap to card -->
+<div aria-hidden="true" class="absolute left-1/2 -translate-x-1/2 z-40 rounded-full pointer-events-none shadow-lg" id="clip-eyelet" style="bottom:0.5rem;width:1.75rem;height:1.75rem;border:3px solid #cbd5e1;background:radial-gradient(circle at 35% 30%, #f8fafc, #94a3b8 55%, #334155 100%);"></div>
+<div class="w-16 h-5 rounded-full bg-obsidian-border border-2 border-white/20 flex items-center justify-center shadow-inner relative" id="card-clip">
+<div class="w-9 h-2 rounded-full bg-black/90"></div>
+<span aria-hidden="true" class="absolute left-[24px] top-1/2 -translate-y-1/2 w-1 h-1" id="clip-anchor-l"></span>
+<span aria-hidden="true" class="absolute left-[36px] top-1/2 -translate-y-1/2 w-1 h-1" id="clip-anchor-r"></span>
+</div>
+</div>
+<!-- 3D FLIPPER (Contains Front & Back Faces) -->
+<div class="card-flipper relative w-full h-[520px] rounded-3xl theme-glow-border shadow-2xl transition-all duration-300" id="card-flipper">
+<!-- ================= SISI DEPAN (FRONT FACE) ================= -->
+<div class="card-face absolute inset-0 rounded-3xl overflow-hidden glass-card p-6 flex flex-col justify-between border-2 border-white/15">
+<!-- Dynamic Hologram Layer -->
+<div class="hologram-effect absolute inset-0 z-20 pointer-events-none opacity-40" id="hologram-overlay-front"></div>
+<!-- Header: Chip, NFC Icon & Verified Status -->
+<div class="relative z-10 flex items-start justify-between pt-2">
+<div class="flex items-center gap-2.5">
+<!-- Simulated Gold SIM/Microchip -->
+<div class="w-11 h-9 rounded-md bg-gradient-to-br from-amber-200 via-yellow-400 to-amber-600 p-1 border border-yellow-200/50 shadow flex flex-col justify-between relative overflow-hidden">
+<div class="w-full h-0.5 bg-amber-800/60 rounded"></div>
+<div class="flex justify-between w-full">
+<div class="w-2 h-3.5 border-r border-amber-800/60"></div>
+<div class="w-2 h-3.5 border-l border-amber-800/60"></div>
+</div>
+<div class="w-full h-0.5 bg-amber-800/60 rounded"></div>
+</div>
+<!-- Contactless NFC Wave -->
+<div class="text-gray-400 hover:text-white transition">
+<i class="w-5 h-5 rotate-45 text-white/50" data-lucide="rss"></i>
+</div>
+</div>
+<!-- Verified Badge -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/40 text-neon text-xs font-mono font-semibold tracking-wide">
+<i class="w-3.5 h-3.5" data-lucide="badge-check"></i>
+<span id="card-verified-label">VERIFIED MEMBER</span>
+</div>
+</div>
+<!-- Profile Photo & Identity Details -->
+<div class="relative z-10 flex flex-col items-center text-center my-auto space-y-3">
+<!-- Photo Container with Neon Hexagon/Ring Glow -->
+<div class="relative group">
+<div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 blur-md opacity-70 group-hover:opacity-100 transition duration-500"></div>
+<div class="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/60 bg-obsidian-surface shadow-inner">
+<img alt="Avatar Profil" class="w-full h-full object-cover" id="card-avatar" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="absolute -bottom-2 -right-1 p-1 bg-obsidian-surface rounded-full border border-white/20 text-neon">
+<i class="w-4 h-4" data-lucide="shield-check"></i>
+</div>
+</div>
+<!-- Name & Role -->
+<div class="space-y-1">
+<h2 class="text-2xl font-bold tracking-tight text-white" id="card-display-name">Alvitho Sipayung</h2>
+<p class="text-xs uppercase font-mono font-medium tracking-wider text-neon" id="card-display-role">Lead Fullstack Architect</p>
+<p class="text-xs text-gray-400 font-sans" id="card-display-org">CyberDynamics Lab • Tech University</p>
+</div>
+<!-- Pass ID & Barcode Visual -->
+<div class="w-full pt-1 px-4">
+<div class="py-1.5 px-3 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between font-mono text-[11px] text-gray-300">
+<span class="text-gray-500">ID NUMBER:</span>
+<span class="text-white font-bold tracking-wider" id="card-display-id">CY-98420-X</span>
+</div>
+</div>
+</div>
+<!-- Footer Barcode & Hologram Seal -->
+<div class="relative z-10 pt-2 border-t border-white/10 flex items-end justify-between">
+           <!-- Stylized SVG Barcode -->
+           <div class="barcode flex items-end gap-[3px] h-8 opacity-75">
+<div class="w-1 h-full bg-white"></div>
+<div class="w-0.5 h-full bg-white"></div>
+<div class="w-1.5 h-6 bg-white"></div>
+<div class="w-0.5 h-8 bg-white"></div>
+<div class="w-2 h-7 bg-white"></div>
+<div class="w-0.5 h-8 bg-white"></div>
+<div class="w-1 h-5 bg-white"></div>
+<div class="w-1.5 h-8 bg-white"></div>
+<div class="w-0.5 h-6 bg-white"></div>
+<div class="w-2 h-8 bg-white"></div>
+<div class="w-1 h-7 bg-white"></div>
+</div>
+<!-- Security Stamp / Seal -->
+<div class="text-right">
+<div class="text-[9px] font-mono text-gray-500 uppercase tracking-widest">ACCESS LEVEL</div>
+<div class="text-xs font-mono font-bold text-neon">LEVEL 05 // UNRESTRICTED</div>
+</div>
+</div>
+</div>
+<!-- ================= SISI BELAKANG (BACK FACE) ================= -->
+<div class="card-face card-back absolute inset-0 rounded-3xl overflow-hidden glass-card p-6 flex flex-col justify-between border-2 border-white/15">
+<!-- Dynamic Hologram Layer for Back -->
+<div class="hologram-effect absolute inset-0 z-20 pointer-events-none opacity-30" id="hologram-overlay-back"></div>
+<!-- Magnetic Black Stripe -->
+<div class="-mx-6 -mt-1 mb-3">
+<div class="w-full h-11 bg-gradient-to-r from-gray-900 via-black to-gray-950 border-y border-white/10 relative flex items-center px-4">
+<div class="w-full h-1 bg-white/5"></div>
+</div>
+</div>
+<!-- Bio / Description Section -->
+<div class="relative z-10 space-y-3">
+<div class="flex items-center justify-between text-xs font-mono text-gray-400">
+<span class="flex items-center gap-1.5 text-neon">
+<i class="w-3.5 h-3.5" data-lucide="cpu"></i>
+                        BIO &amp; SYSTEM CREDENTIALS
+                      </span>
+<span class="text-[10px] text-gray-500">ENCRYPTED 256-BIT</span>
+</div>
+<p class="text-xs text-gray-300 leading-relaxed font-sans bg-black/30 p-3 rounded-xl border border-white/5" id="card-display-bio">
+                      Senior Software Engineer berfokus pada arsitektur sistem Web3, microservices high-throughput, dan interaksi 3D web futuristik. 7+ tahun pengalaman merancang solusi digital tangguh.
+                    </p>
+</div>
+<!-- Core Skills Badges -->
+<div class="relative z-10 space-y-1.5">
+<div class="text-[11px] font-mono text-gray-400 uppercase tracking-wider">CORE SKILLS &amp; EXPERTISE</div>
+<div class="flex flex-wrap gap-1.5" id="card-skills-container">
+<span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-cyan-500/15 border border-cyan-500/40 text-cyan-300">TypeScript</span>
+<span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-purple-500/15 border border-purple-500/40 text-purple-300">Three.js / 3D</span>
+<span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-emerald-500/15 border border-emerald-500/40 text-emerald-300">Tailwind CSS</span>
+<span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-pink-500/15 border border-pink-500/40 text-pink-300">React &amp; Next.js</span>
+<span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-blue-500/15 border border-blue-500/40 text-blue-300">Rust</span>
+<span class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-amber-500/15 border border-amber-500/40 text-amber-300">System Architecture</span>
+</div>
+</div>
+<!-- QR Code & Auth Signature Section -->
+<div class="relative z-10 pt-3 border-t border-white/10 flex items-center justify-between">
+<div class="space-y-1">
+<div class="text-[9px] font-mono text-gray-500 uppercase">SCAN TO CONNECT</div>
+<div class="text-xs font-mono text-white">portfolio.alvithosipayung.dev</div>
+<div class="text-[9px] font-mono text-emerald-400 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> KEY VERIFIED
+                      </div>
+</div>
+<!-- Stylized Cyber QR Code Box -->
+<div class="p-1.5 rounded-xl bg-white p-1 shadow-md border-2 border-neon flex items-center justify-center">
+<svg class="w-14 h-14" fill="#000000" viewbox="0 0 100 100">
+<!-- Simulated QR Code Matrix -->
+<path d="M0,0 h30 v30 h-30 z M10,10 h10 v10 h-10 z"></path>
+<path d="M70,0 h30 v30 h-30 z M80,10 h10 v10 h-10 z"></path>
+<path d="M0,70 h30 v30 h-30 z M10,80 h10 v10 h-10 z"></path>
+<rect height="20" width="8" x="40" y="10"></rect>
+<rect height="8" width="8" x="55" y="5"></rect>
+<rect height="20" width="30" x="35" y="40"></rect>
+<rect height="8" width="20" x="75" y="45"></rect>
+<rect height="25" width="8" x="40" y="70"></rect>
+<rect height="8" width="15" x="55" y="75"></rect>
+<rect height="20" width="15" x="80" y="75"></rect>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Flip Card Quick Action Button under Card -->
+<div class="mt-6 flex items-center gap-3">
+<button class="px-5 py-2 rounded-xl bg-obsidian-surface border border-white/20 hover:border-neon text-white hover:text-neon text-xs font-mono tracking-wider flex items-center gap-2 shadow-lg transition-all transform active:scale-95" id="btn-quick-flip">
+<i class="w-4 h-4" data-lucide="refresh-cw"></i>
+<span>KLIK UNTUK BALIK KARTU (FLIP 3D)</span>
+</button>
+<button class="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white text-xs font-mono transition" id="btn-reset-tilt" title="Reset Posisi">
+<i class="w-4 h-4" data-lucide="rotate-ccw"></i>
+</button>
+</div>
+<p class="text-[11px] font-mono text-gray-500 mt-2 text-center">
+            Tips: Tarik kartu ke mana saja (ada kelonggaran tali) &amp; lepaskan untuk efek ayunan. Arahkan kursor untuk kemiringan gravitasi &amp; pantulan cahaya holografis.
+          </p>
+</div>
+<!-- LIVE EDITOR DRAWER (hidden by default, toggled by the nav button) -->
+<div aria-hidden="true" class="fixed inset-0 z-40 hidden bg-black/60 backdrop-blur-sm" id="editor-backdrop"></div>
+<aside aria-hidden="true" class="fixed inset-y-0 right-0 z-50 w-full max-w-md translate-x-full pointer-events-none transition-transform duration-300 ease-out" id="editor-panel">
+<div class="glass-panel h-full overflow-y-auto border-l border-white/10 p-6 md:p-8 space-y-6">
+<!-- Panel Header -->
+<div class="flex items-center justify-between pb-4 border-b border-white/10">
+<div class="flex items-center gap-2.5">
+<div class="p-2 rounded-lg bg-neon/10 border border-neon/30 text-neon">
+<i class="w-5 h-5" data-lucide="sliders"></i>
+</div>
+<div>
+<h3 class="text-lg font-bold text-white">Live Card Editor</h3>
+<p class="text-xs text-gray-400 font-mono">Ubah profil &amp; tema secara instan</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">REALTIME SYNC</span>
+<button aria-label="Tutup editor" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 hover:text-white transition" id="btn-close-editor" type="button">
+<i class="w-4 h-4" data-lucide="x"></i>
+</button>
+</div>
+</div>
+<!-- THEME COLOR PICKER -->
+<div class="space-y-2">
+<label class="block text-xs font-mono text-gray-300 uppercase tracking-wider flex items-center justify-between">
+<span>Skema Warna Neon Dinamis</span>
+<span class="text-neon font-bold" id="active-theme-name">Electric Cyan</span>
+</label>
+<div class="grid grid-cols-5 gap-2 pt-1">
+<!-- Cyan -->
+<button class="theme-btn h-10 rounded-xl bg-cyan-400 ring-2 ring-white ring-offset-2 ring-offset-black transition transform active:scale-95 flex items-center justify-center" data-glow="rgba(0,240,255,0.45)" data-neon="#00f0ff" data-theme="cyan"></button>
+<!-- Purple -->
+<button class="theme-btn h-10 rounded-xl bg-purple-500 hover:ring-2 ring-white ring-offset-2 ring-offset-black transition transform active:scale-95" data-glow="rgba(176,38,255,0.45)" data-neon="#b026ff" data-theme="purple"></button>
+<!-- Emerald -->
+<button class="theme-btn h-10 rounded-xl bg-emerald-400 hover:ring-2 ring-white ring-offset-2 ring-offset-black transition transform active:scale-95" data-glow="rgba(0,255,157,0.45)" data-neon="#00ff9d" data-theme="emerald"></button>
+<!-- Sunset Red -->
+<button class="theme-btn h-10 rounded-xl bg-rose-500 hover:ring-2 ring-white ring-offset-2 ring-offset-black transition transform active:scale-95" data-glow="rgba(255,51,102,0.45)" data-neon="#ff3366" data-theme="sunset"></button>
+<!-- Gold -->
+<button class="theme-btn h-10 rounded-xl bg-amber-400 hover:ring-2 ring-white ring-offset-2 ring-offset-black transition transform active:scale-95" data-glow="rgba(255,208,0,0.45)" data-neon="#ffd000" data-theme="gold"></button>
+</div>
+</div>
+<!-- PHOTO UPLOAD & URL CONTROLS -->
+<div class="space-y-2 pt-2 border-t border-white/5">
+<label class="block text-xs font-mono text-gray-300 uppercase tracking-wider">Foto Profil (Local Upload / URL)</label>
+<div class="flex items-center gap-2">
+<label class="flex-1 cursor-pointer px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-mono text-gray-300 hover:text-white transition flex items-center justify-center gap-2 text-center" for="input-avatar-file">
+<i class="w-4 h-4 text-neon" data-lucide="upload"></i>
+<span>Upload Foto Lokal</span>
+<input accept="image/*" class="hidden" id="input-avatar-file" type="file"/>
+</label>
+<button class="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-mono text-gray-300 hover:text-white transition flex items-center gap-1.5" id="btn-random-avatar" title="Gunakan Foto Acak Unsplash">
+<i class="w-4 h-4" data-lucide="shuffle"></i>
+<span class="hidden sm:inline">Random</span>
+</button>
+</div>
+</div>
+<!-- TEXT CUSTOMIZATION INPUTS -->
+<div class="space-y-3 pt-2 border-t border-white/5">
+<!-- Name & Role (2 cols) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div class="space-y-1">
+<label class="text-[11px] font-mono text-gray-400">NAMA LENGKAP</label>
+<input class="w-full px-3 py-2 rounded-xl bg-obsidian-surface border border-white/15 text-white text-xs font-sans focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon" id="input-name" type="text" value="Alvitho Sipayung"/>
+</div>
+<div class="space-y-1">
+<label class="text-[11px] font-mono text-gray-400">PERAN / JABATAN</label>
+<input class="w-full px-3 py-2 rounded-xl bg-obsidian-surface border border-white/15 text-white text-xs font-sans focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon" id="input-role" type="text" value="Lead Fullstack Architect"/>
+</div>
+</div>
+<!-- Org & Member ID (2 cols) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div class="space-y-1">
+<label class="text-[11px] font-mono text-gray-400">INSTITUSI / KAMPUS</label>
+<input class="w-full px-3 py-2 rounded-xl bg-obsidian-surface border border-white/15 text-white text-xs font-sans focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon" id="input-org" type="text" value="CyberDynamics Lab • Tech University"/>
+</div>
+<div class="space-y-1">
+<label class="text-[11px] font-mono text-gray-400">ID / NIM / NIP</label>
+<input class="w-full px-3 py-2 rounded-xl bg-obsidian-surface border border-white/15 text-white text-xs font-mono focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon" id="input-id" type="text" value="CY-98420-X"/>
+</div>
+</div>
+<!-- Bio -->
+<div class="space-y-1">
+<label class="text-[11px] font-mono text-gray-400">BIO SINGKAT (SISI BELAKANG)</label>
+<textarea class="w-full px-3 py-2 rounded-xl bg-obsidian-surface border border-white/15 text-white text-xs font-sans focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon" id="input-bio" rows="2">Senior Software Engineer berfokus pada arsitektur sistem Web3, microservices high-throughput, dan interaksi 3D web futuristik. 7+ tahun pengalaman merancang solusi digital tangguh.</textarea>
+</div>
+</div>
+<!-- FLIP & TOGGLE CONTROLS -->
+<div class="pt-2 border-t border-white/5 space-y-3">
+<button class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold font-mono text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95" id="btn-panel-flip">
+<i class="w-4 h-4" data-lucide="flip-horizontal"></i>
+<span id="btn-panel-flip-text">PUTAR KARTU (LIHAT SISI BELAKANG)</span>
+</button>
+</div>
+<!-- WORK EXPERIENCE EDITOR -->
+<div class="pt-2 border-t border-white/5 space-y-3">
+<div class="flex items-center justify-between">
+<label class="text-xs font-mono text-gray-300 uppercase tracking-wider">Pengalaman Kerja</label>
+<button class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-[11px] font-mono text-gray-300 hover:text-white transition flex items-center gap-1" id="btn-add-exp" title="Tambah pengalaman baru">
+<i class="w-3.5 h-3.5 text-neon" data-lucide="plus"></i>
+<span>Tambah</span>
+</button>
+</div>
+<div class="space-y-3 max-h-96 overflow-y-auto pr-1" id="exp-editor-list"></div>
+</div>
+</div>
+</aside>
+</div>
+</section>
+<!-- SECTION: TENTANG SAYA & SPESIFIKASI ARSITEKTUR -->
+<section class="pt-12 border-t border-white/10" id="about">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+<div class="md:col-span-5 space-y-4">
+<div class="inline-flex items-center gap-2 text-xs font-mono text-neon">
+<i class="w-4 h-4" data-lucide="terminal"></i>
+<span>SYSTEM OVERVIEW</span>
+</div>
+<h2 class="text-3xl font-bold tracking-tight text-white">
+            Membangun Masa Depan Digital dengan Presisi Teknik &amp; Estetika Cyberpunk.
+          </h2>
+<p class="text-gray-400 text-sm leading-relaxed">
+            Menggabungkan keindahan visual bergaya dark glassmorphism dengan performa kode tinggi tanpa lag. Komponen kartu ID gantung ini dibangun dengan murni <strong>Vanilla JavaScript &amp; CSS 3D Transforms</strong>, menghasilkan 60+ FPS mulus tanpa ketergantungan library berat.
+          </p>
+<div class="flex items-center gap-4 pt-2">
+<div class="text-center p-3 rounded-xl bg-white/5 border border-white/10 w-24">
+<div class="text-2xl font-mono font-bold text-neon">7+</div>
+<div class="text-[10px] text-gray-400">Tahun Pengalaman</div>
+</div>
+<div class="text-center p-3 rounded-xl bg-white/5 border border-white/10 w-24">
+<div class="text-2xl font-mono font-bold text-purple-400">42+</div>
+<div class="text-[10px] text-gray-400">Proyek Rilis</div>
+</div>
+<div class="text-center p-3 rounded-xl bg-white/5 border border-white/10 w-24">
+<div class="text-2xl font-mono font-bold text-emerald-400">99%</div>
+<div class="text-[10px] text-gray-400">Client CSAT</div>
+</div>
+</div>
+</div>
+<!-- Right Side: Interactive Feature Cards -->
+<div class="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="glass-panel p-5 rounded-2xl border border-white/10 hover:border-neon transition space-y-2 group">
+<div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-neon group-hover:scale-110 transition">
+<i class="w-5 h-5" data-lucide="layers"></i>
+</div>
+<h4 class="text-white font-bold text-sm">3D Parallax Tilt Physics</h4>
+<p class="text-xs text-gray-400">Perhitungan rotasi X/Y real-time berdasarkan posisi kursor dengan redaman inersia lembut untuk sensasi kartu fisik asli.</p>
+</div>
+<div class="glass-panel p-5 rounded-2xl border border-white/10 hover:border-purple-400 transition space-y-2 group">
+<div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition">
+<i class="w-5 h-5" data-lucide="sparkles"></i>
+</div>
+<h4 class="text-white font-bold text-sm">Holographic Foil Reflection</h4>
+<p class="text-xs text-gray-400">Lapisan gradasi spektral holografis dinamis yang bereaksi terhadap sudut pandang kursor pengguna secara otomatis.</p>
+</div>
+<div class="glass-panel p-5 rounded-2xl border border-white/10 hover:border-emerald-400 transition space-y-2 group">
+<div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition">
+<i class="w-5 h-5" data-lucide="cpu"></i>
+</div>
+<h4 class="text-white font-bold text-sm">Dual-Sided Data Security</h4>
+<p class="text-xs text-gray-400">Sisi depan menampilkan kredensial publik terverifikasi, sisi belakang dilengkapi simulasi magnetic stripe, NFC chip &amp; QR auth.</p>
+</div>
+<div class="glass-panel p-5 rounded-2xl border border-white/10 hover:border-rose-400 transition space-y-2 group">
+<div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:scale-110 transition">
+<i class="w-5 h-5" data-lucide="palette"></i>
+</div>
+<h4 class="text-white font-bold text-sm">Reactive Multi-Theme Engine</h4>
+<p class="text-xs text-gray-400">Sistem token CSS variabel kustom yang memperbarui seluruh aksen neon, ambient blur glow, dan status badge secara serentak.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION: PROYEK UNGGULAN -->
+<section class="pt-12 border-t border-white/10 space-y-8" id="projects">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="text-xs font-mono text-neon uppercase tracking-wider mb-1">FEATURED REPOSITORIES</div>
+<h2 class="text-3xl font-bold text-white tracking-tight">Karya &amp; Karya Desain Terkini</h2>
+</div>
+<p class="text-xs font-mono text-gray-400 max-w-md">Kompilasi proyek arsitektur cloud, visual interaktif WebGL, dan platform fintech skala besar.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Project 1 -->
+<div class="glass-panel rounded-2xl overflow-hidden border border-white/10 hover:border-cyan-400 transition flex flex-col justify-between group">
+<div class="p-6 space-y-3">
+<div class="flex items-center justify-between text-xs font-mono text-gray-400">
+<span class="text-neon">WEBGL / SHADER</span>
+<span>2024</span>
+</div>
+<h3 class="text-lg font-bold text-white group-hover:text-neon transition">Neural Core Dashboard</h3>
+<p class="text-xs text-gray-400 leading-relaxed">Platform visualisasi analitik AI real-time dengan rendering node 3D berbasis WebGL &amp; Web Audio API audio-reactive.</p>
+</div>
+<div class="p-6 pt-0 flex items-center justify-between border-t border-white/5 text-xs font-mono">
+<span class="text-gray-400">Three.js • Tailwind • Rust</span>
+<a class="text-neon flex items-center gap-1 hover:underline" href="#">Lihat Detail <i class="w-3.5 h-3.5" data-lucide="arrow-up-right"></i></a>
+</div>
+</div>
+<!-- Project 2 -->
+<div class="glass-panel rounded-2xl overflow-hidden border border-white/10 hover:border-purple-400 transition flex flex-col justify-between group">
+<div class="p-6 space-y-3">
+<div class="flex items-center justify-between text-xs font-mono text-gray-400">
+<span class="text-purple-400">FINTECH DECENTRALIZED</span>
+<span>2024</span>
+</div>
+<h3 class="text-lg font-bold text-white group-hover:text-purple-400 transition">Aetheria Vault Protocol</h3>
+<p class="text-xs text-gray-400 leading-relaxed">Smart contract multi-signature vault berkecepatan tinggi dengan integrasi biometric passkey dan enkripsi quantum-resistant.</p>
+</div>
+<div class="p-6 pt-0 flex items-center justify-between border-t border-white/5 text-xs font-mono">
+<span class="text-gray-400">Next.js • Solidity • Wagmi</span>
+<a class="text-purple-400 flex items-center gap-1 hover:underline" href="#">Lihat Detail <i class="w-3.5 h-3.5" data-lucide="arrow-up-right"></i></a>
+</div>
+</div>
+<!-- Project 3 -->
+<div class="glass-panel rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-400 transition flex flex-col justify-between group">
+<div class="p-6 space-y-3">
+<div class="flex items-center justify-between text-xs font-mono text-gray-400">
+<span class="text-emerald-400">HARDWARE IOT</span>
+<span>2023</span>
+</div>
+<h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition">Quantum Gateway UI</h3>
+<p class="text-xs text-gray-400 leading-relaxed">Interface konsol monitoring perangkat edge IoT dengan telemetri websocket sub-milidetik dan peringatan anomali otomatis.</p>
+</div>
+<div class="p-6 pt-0 flex items-center justify-between border-t border-white/5 text-xs font-mono">
+<span class="text-gray-400">Go • SvelteKit • MQTT</span>
+<a class="text-emerald-400 flex items-center gap-1 hover:underline" href="#">Lihat Detail <i class="w-3.5 h-3.5" data-lucide="arrow-up-right"></i></a>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION: PENGALAMAN KERJA -->
+<section class="pt-12 border-t border-white/10 space-y-8" id="experience">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="text-xs font-mono text-neon uppercase tracking-wider mb-1">CAREER TIMELINE</div>
+<h2 class="text-3xl font-bold text-white tracking-tight">Pengalaman Kerja</h2>
+</div>
+<p class="text-xs font-mono text-gray-400 max-w-md">Perjalanan profesional yang membentuk keahlian dalam membangun produk digital berskala besar.</p>
+</div>
+<div class="space-y-6" id="experience-list"></div>
+</section>
+<!-- SECTION: KONTAK & FOOTER -->
+<section class="pt-12 border-t border-white/10" id="contact">
+<div class="glass-panel rounded-3xl p-8 md:p-12 text-center max-w-3xl mx-auto space-y-6 relative overflow-hidden">
+<div class="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-[100px] bg-neon opacity-20 pointer-events-none"></div>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-neon">
+<i class="w-3.5 h-3.5 animate-pulse" data-lucide="radio"></i>
+<span>TRANSMISSION CHANNEL OPEN</span>
+</div>
+<h2 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Siap Membangun Solusi Digital Masa Depan Bersama?</h2>
+<p class="text-sm text-gray-400 max-w-lg mx-auto">
+          Terbuka untuk kolaborasi proyek, konsultasi arsitektur sistem modern, atau kesempatan kerja sama strategis.
+        </p>
+<div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+<a class="px-6 py-3 rounded-xl bg-neon hover:bg-cyan-300 text-black font-bold font-mono text-xs tracking-wider flex items-center gap-2 shadow-lg transition transform active:scale-95" href="CV.pdf" target="_blank" rel="noopener noreferrer">
+<i class="w-4 h-4" data-lucide="file-text"></i>
+<span>LIHAT CV</span>
+</a>
+<a class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-neon/50 text-neon font-mono text-xs tracking-wider flex items-center gap-2 transition" download="CV-Alvitho-Sipayung.pdf" href="CV.pdf">
+<i class="w-4 h-4" data-lucide="download"></i>
+<span>UNDUH CV</span>
+</a>
+<a class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-mono text-xs tracking-wider flex items-center gap-2 transition" href="https://github.com/alvithops" target="_blank" rel="noopener noreferrer">
+<i class="w-4 h-4" data-lucide="github"></i>
+<span>GITHUB PROFILE</span>
+</a>
+</div>
+</div>
+</section>
+</main>
+<!-- FOOTER -->
+<footer class="border-t border-white/10 py-8 px-4 text-center font-mono text-xs text-gray-500 relative z-10">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-neon"></span>
+<span class="text-gray-400">DESIGN &amp; ARCHITECTURE • OBSIDIAN CYBER ELEGANCE</span>
+</div>
+<div>© <span id="footer-year">2025</span> Alvitho Sipayung. All rights reserved. Single-File Vanilla JS Engine.</div>
+</div>
+</footer>
+<!-- ================= IMAGE LIGHTBOX ================= -->
+<div aria-hidden="true" aria-modal="true" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 sm:p-8" id="image-lightbox" role="dialog">
+<div class="absolute inset-0 bg-black/70 backdrop-blur-2xl" id="lightbox-backdrop"></div>
+<div class="lightbox-frame relative z-10 max-w-5xl flex flex-col items-center">
+<button aria-label="Tutup gambar" class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-rose-500/80 border border-white/25 text-white flex items-center justify-center backdrop-blur-md transition shadow-lg" id="lightbox-close" type="button">
+<i class="w-5 h-5" data-lucide="x"></i>
+</button>
+<img alt="Pratinjau gambar pengalaman kerja" class="block max-h-[82vh] max-w-[90vw] rounded-2xl border-2 border-white/20 shadow-2xl object-contain bg-obsidian-surface" id="lightbox-img"/>
+<div class="mt-3 text-[11px] font-mono text-gray-300 bg-black/50 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md" id="lightbox-caption"></div>
+</div>
+</div>
+<!-- ================= LIVE EDITOR PIN GATE ================= -->
+<div aria-hidden="true" aria-modal="true" class="fixed inset-0 z-[120] hidden items-center justify-center p-4" id="pin-gate" role="dialog">
+<div class="absolute inset-0 bg-black/75 backdrop-blur-xl" id="pin-backdrop"></div>
+<div class="relative z-10 w-full max-w-sm glass-panel rounded-2xl border border-white/15 p-6 space-y-5 shadow-2xl">
+<button aria-label="Tutup" class="absolute top-3 right-3 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 hover:text-white transition" id="pin-close" type="button">
+<i class="w-4 h-4" data-lucide="x"></i>
+</button>
+<div class="text-center space-y-2 pt-1">
+<div class="mx-auto w-12 h-12 rounded-xl bg-white/5 border border-white/15 flex items-center justify-center text-neon">
+<i class="w-6 h-6" data-lucide="shield-check"></i>
+</div>
+<h3 class="text-lg font-bold text-white tracking-tight" id="pin-title">LIVE EDITOR TERKUNCI</h3>
+<p class="text-xs font-mono text-gray-400" id="pin-subtitle">Masukkan 6 digit sandi angka</p>
+</div>
+
+<!-- STEP 1: UNLOCK -->
+<div class="space-y-4" id="pin-step-unlock">
+<input aria-label="Sandi 6 digit" autocomplete="off" class="w-full text-center text-2xl tracking-[0.5em] font-mono px-3 py-3 rounded-xl bg-obsidian-surface border border-white/20 text-white placeholder-gray-600 focus:outline-none focus:border-neon transition" id="pin-input" inputmode="numeric" maxlength="6" placeholder="••••••" type="password"/>
+<p class="hidden text-center text-xs font-mono text-rose-400" id="pin-error"></p>
+<button class="w-full py-3 rounded-xl bg-neon hover:bg-cyan-300 text-black font-bold font-mono text-xs tracking-wider transition flex items-center justify-center gap-2" id="pin-submit" type="button">
+<i class="w-4 h-4" data-lucide="unlock"></i><span>BUKA EDITOR</span>
+</button>
+<button class="w-full text-center text-xs font-mono text-gray-400 hover:text-neon transition" id="pin-goto-clue" type="button">Lupa sandi? Ganti sandi</button>
+</div>
+
+<!-- STEP 2: SECURITY CLUES -->
+<div class="hidden space-y-4" id="pin-step-clue">
+<p class="text-xs font-mono text-gray-400 leading-relaxed">Jawab 2 pertanyaan keamanan untuk memverifikasi identitas sebelum mengganti sandi.</p>
+<label class="block space-y-1">
+<span class="text-[11px] font-mono text-gray-400">1. Apa makanan kesukaan favorit Anda?</span>
+<input autocomplete="off" class="w-full px-3 py-2.5 rounded-lg bg-obsidian-surface border border-white/15 text-white text-sm focus:outline-none focus:border-neon transition" id="clue-food" placeholder="Jawaban" type="text"/>
+</label>
+<label class="block space-y-1">
+<span class="text-[11px] font-mono text-gray-400">2. Apa hewan kesukaan favorit Anda?</span>
+<input autocomplete="off" class="w-full px-3 py-2.5 rounded-lg bg-obsidian-surface border border-white/15 text-white text-sm focus:outline-none focus:border-neon transition" id="clue-animal" placeholder="Jawaban" type="text"/>
+</label>
+<p class="hidden text-center text-xs font-mono text-rose-400" id="clue-error"></p>
+<button class="w-full py-3 rounded-xl bg-neon hover:bg-cyan-300 text-black font-bold font-mono text-xs tracking-wider transition" id="clue-submit" type="button">VERIFIKASI</button>
+<button class="w-full text-center text-xs font-mono text-gray-400 hover:text-white transition" id="clue-back" type="button">Kembali</button>
+</div>
+
+<!-- STEP 3: SET NEW PIN -->
+<div class="hidden space-y-4" id="pin-step-new">
+<p class="text-xs font-mono text-gray-400">Buat sandi baru berupa 6 digit angka.</p>
+<input aria-label="Sandi baru" autocomplete="off" class="w-full text-center text-xl tracking-[0.4em] font-mono px-3 py-2.5 rounded-xl bg-obsidian-surface border border-white/20 text-white placeholder-gray-600 focus:outline-none focus:border-neon transition" id="pin-new" inputmode="numeric" maxlength="6" placeholder="••••••" type="password"/>
+<input aria-label="Ulangi sandi baru" autocomplete="off" class="w-full text-center text-xl tracking-[0.4em] font-mono px-3 py-2.5 rounded-xl bg-obsidian-surface border border-white/20 text-white placeholder-gray-600 focus:outline-none focus:border-neon transition" id="pin-new2" inputmode="numeric" maxlength="6" placeholder="ulangi" type="password"/>
+<p class="hidden text-center text-xs font-mono text-rose-400" id="new-error"></p>
+<button class="w-full py-3 rounded-xl bg-neon hover:bg-cyan-300 text-black font-bold font-mono text-xs tracking-wider transition" id="new-submit" type="button">SIMPAN SANDI BARU</button>
+<button class="w-full text-center text-xs font-mono text-gray-400 hover:text-white transition" id="new-back" type="button">Kembali</button>
+</div>
+</div>
+</div>
+<!-- ================= CLIENT JAVASCRIPT ENGINE ================= -->
+<script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // DOM References
+    const perspectiveWrapper = document.getElementById('perspective-wrapper');
+    const cardHanger = document.getElementById('card-hanger');
+    const cardFlipper = document.getElementById('card-flipper');
+    const holoFront = document.getElementById('hologram-overlay-front');
+    const holoBack = document.getElementById('hologram-overlay-back');
+    const orb1 = document.getElementById('orb-1');
+
+    // Action Buttons
+    const btnQuickFlip = document.getElementById('btn-quick-flip');
+    const btnPanelFlip = document.getElementById('btn-panel-flip');
+    const btnPanelFlipText = document.getElementById('btn-panel-flip-text');
+    const btnResetTilt = document.getElementById('btn-reset-tilt');
+    const btnRandomAvatar = document.getElementById('btn-random-avatar');
+
+    // Live Editor Inputs
+    const inputName = document.getElementById('input-name');
+    const inputRole = document.getElementById('input-role');
+    const inputOrg = document.getElementById('input-org');
+    const inputId = document.getElementById('input-id');
+    const inputBio = document.getElementById('input-bio');
+    const inputAvatarFile = document.getElementById('input-avatar-file');
+
+    // Card Display Targets
+    const cardAvatar = document.getElementById('card-avatar');
+    const cardDisplayName = document.getElementById('card-display-name');
+    const cardDisplayRole = document.getElementById('card-display-role');
+    const cardDisplayOrg = document.getElementById('card-display-org');
+    const cardDisplayId = document.getElementById('card-display-id');
+    const cardDisplayBio = document.getElementById('card-display-bio');
+
+    // Theme Elements
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const activeThemeLabel = document.getElementById('active-theme-name');
+
+    // Theme Toggle & Work Experience Elements
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
+    const experienceList = document.getElementById('experience-list');
+    const expEditorList = document.getElementById('exp-editor-list');
+    const btnAddExp = document.getElementById('btn-add-exp');
+
+    // Draggable hanging card elements
+    const cardStage = document.getElementById('card-stage');
+    const swingAssembly = document.getElementById('swing-assembly');
+    const hookEl = document.getElementById('hook');
+    const strapLeft = document.getElementById('strap-left');
+    const strapRight = document.getElementById('strap-right');
+    const cardClip = document.getElementById('card-clip');
+    const clipAnchorL = document.getElementById('clip-anchor-l');
+    const clipAnchorR = document.getElementById('clip-anchor-r');
+
+    // Live Editor drawer elements
+    const editorPanel = document.getElementById('editor-panel');
+    const editorBackdrop = document.getElementById('editor-backdrop');
+    const btnOpenEditor = document.getElementById('btn-open-editor');
+    const btnCloseEditor = document.getElementById('btn-close-editor');
+
+    // State Variables
+    let isFlipped = false;
+    let targetTiltX = 0;
+    let targetTiltY = 0;
+    let currentTiltX = 0;
+    let currentTiltY = 0;
+    let isHovering = false;
+    let naturalSwayTime = 0;
+
+    // Rope slack / drag physics state
+    const MAX_ROPE = 340;              // maximum reach of the lanyard (slack length)
+    const rope = { x: 0, y: 0, vx: 0, vy: 0 };
+    let isDragging = false;
+    let dragStartPointer = { x: 0, y: 0 };
+    let dragStartRope = { x: 0, y: 0 };
+    let lastPointer = { x: 0, y: 0 };
+    let lastPointerTime = 0;
+
+    // 1. 3D PARALLAX TILT & HANGING PHYSICS
+    function handlePointerMove(e) {
+      if (!cardHanger) return;
+      isHovering = true;
+      const rect = cardHanger.getBoundingClientRect();
+      const cardCenterX = rect.left + rect.width / 2;
+      const cardCenterY = rect.top + rect.height / 2;
+
+      // Calculate normalized mouse distance from center (-1 to 1)
+      const mouseX = (e.clientX - cardCenterX) / (rect.width / 2);
+      const mouseY = (e.clientY - cardCenterY) / (rect.height / 2);
+
+      // Clamp values
+      const clampedX = Math.max(-1.4, Math.min(1.4, mouseX));
+      const clampedY = Math.max(-1.4, Math.min(1.4, mouseY));
+
+      // Calculate Tilt & Sway
+      // Hanging cards sway on Z and rotate along Y and X axis
+      targetTiltY = clampedX * 18; // Yaw
+      targetTiltX = -clampedY * 16; // Pitch
+
+      // Holographic Light Reflection Coordinates
+      const holoX = 50 + clampedX * 40;
+      const holoY = 50 + clampedY * 40;
+      const holoStyle = `${holoX}% ${holoY}%`;
+
+      if (holoFront) holoFront.style.backgroundPosition = holoStyle;
+      if (holoBack) holoBack.style.backgroundPosition = holoStyle;
+    }
+
+    function handlePointerLeave() {
+      isHovering = false;
+      targetTiltX = 0;
+      targetTiltY = 0;
+    }
+
+    // Attach mouse/touch movement listeners to the wrapper
+    perspectiveWrapper.addEventListener('mousemove', handlePointerMove);
+    perspectiveWrapper.addEventListener('mouseleave', handlePointerLeave);
+
+    // Touch support for mobile devices
+    perspectiveWrapper.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        handlePointerMove(e.touches[0]);
+      }
+    }, { passive: true });
+    perspectiveWrapper.addEventListener('touchend', handlePointerLeave);
+
+    // ============ DRAGGABLE CARD + ROPE SLACK PHYSICS ============
+    function getPivot() {
+      if (!cardStage || !hookEl) return { x: 0, y: 0 };
+      const stageRect = cardStage.getBoundingClientRect();
+      const hookRect = hookEl.getBoundingClientRect();
+      return {
+        x: hookRect.left + hookRect.width / 2 - stageRect.left,
+        y: hookRect.bottom - stageRect.top
+      };
+    }
+
+    function updateRopeVisual() {
+      if (!swingAssembly) return;
+
+      // Move + gently rotate the hanging card according to the rope offset
+      const rotZ = Math.max(-22, Math.min(22, rope.x * 0.06));
+      swingAssembly.style.transform = `translate(${rope.x}px, ${rope.y}px) rotate(${rotZ}deg)`;
+
+      // Stretch the two crossing lanyard straps from the fixed hook to the card clip
+      if (!strapLeft || !strapRight) return;
+
+      const s = cardStage.getBoundingClientRect();
+      const hookRect = hookEl.getBoundingClientRect();
+      const hookLeft  = hookRect.left + 6 - s.left;
+      const hookRight = hookRect.right - 6 - s.left;
+      const hookBottom = hookRect.bottom - s.top;
+
+      let clipL, clipR;
+      if (clipAnchorL && clipAnchorR) {
+        const cL = clipAnchorL.getBoundingClientRect();
+        const cR = clipAnchorR.getBoundingClientRect();
+        clipL = { x: cL.left + cL.width / 2 - s.left, y: cL.top + cL.height / 2 - s.top };
+        clipR = { x: cR.left + cR.width / 2 - s.left, y: cR.top + cR.height / 2 - s.top };
+      } else if (cardClip) {
+        const cc = cardClip.getBoundingClientRect();
+        clipL = { x: cc.left - s.left, y: cc.top - s.top };
+        clipR = { x: cc.right - s.left, y: cc.top - s.top };
+      } else {
+        clipL = { x: s.width / 2 - 20, y: hookBottom + 130 };
+        clipR = { x: s.width / 2 + 20, y: hookBottom + 130 };
+      }
+
+      setStrap(strapLeft,  { x: hookLeft,  y: hookBottom }, clipR);
+      setStrap(strapRight, { x: hookRight, y: hookBottom }, clipL);
+    }
+
+    function setStrap(el, from, to) {
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const dist = Math.hypot(dx, dy);
+      const angle = Math.atan2(-dx, dy) * 180 / Math.PI;
+      el.style.left = from.x + 'px';
+      el.style.top = from.y + 'px';
+      el.style.height = dist + 'px';
+      el.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+    }
+
+    function clampRope() {
+      const dist = Math.hypot(rope.x, rope.y);
+      if (dist > MAX_ROPE) {
+        const scale = MAX_ROPE / dist;
+        rope.x *= scale;
+        rope.y *= scale;
+        const nx = rope.x / MAX_ROPE;
+        const ny = rope.y / MAX_ROPE;
+        const radial = rope.vx * nx + rope.vy * ny;
+        if (radial > 0) { rope.vx -= radial * nx; rope.vy -= radial * ny; }
+      }
+    }
+
+    // Smooth Physics Animation Loop (Inertia, Idle Sway & Rope Spring)
+    function animatePhysics() {
+      if (!isHovering) {
+        // Natural subtle ambient sway when not being hovered
+        naturalSwayTime += 0.02;
+        const ambientSwayX = Math.sin(naturalSwayTime) * 3;
+        const ambientSwayY = Math.cos(naturalSwayTime * 0.7) * 2;
+        targetTiltY = ambientSwayX;
+        targetTiltX = ambientSwayY;
+      }
+
+      // Smooth interpolation (lerp) for the holographic tilt
+      currentTiltX += (targetTiltX - currentTiltX) * 0.08;
+      currentTiltY += (targetTiltY - currentTiltY) * 0.08;
+
+      // Apply transform to the card hanger (including small pendulum Z rotation)
+      const pendulumZ = currentTiltY * 0.25;
+      cardHanger.style.transform = `rotateX(${currentTiltX}deg) rotateY(${currentTiltY}deg) rotateZ(${pendulumZ}deg)`;
+
+      // Rope slack spring: elastically returns to the resting position under the hook
+      if (!isDragging) {
+        const K = 0.04;    // spring stiffness (toward rest)
+        const DAMP = 0.88; // rope / air damping
+        rope.vx += -K * rope.x;
+        rope.vy += -K * rope.y;
+        rope.vx *= DAMP;
+        rope.vy *= DAMP;
+        rope.x += rope.vx;
+        rope.y += rope.vy;
+        if (Math.abs(rope.x) < 0.05 && Math.abs(rope.y) < 0.05 && Math.hypot(rope.vx, rope.vy) < 0.05) {
+          rope.x = 0; rope.y = 0; rope.vx = 0; rope.vy = 0;
+        }
+      }
+      clampRope();
+      updateRopeVisual();
+
+      requestAnimationFrame(animatePhysics);
+    }
+    animatePhysics();
+
+    // Pointer drag handlers (mouse + touch + pen)
+    function onDragStart(e) {
+      if (!swingAssembly) return;
+      isDragging = true;
+      isHovering = true; // pause ambient sway while dragging
+      document.body.classList.add('is-dragging');
+      dragStartPointer = { x: e.clientX, y: e.clientY };
+      dragStartRope = { x: rope.x, y: rope.y };
+      lastPointer = { x: e.clientX, y: e.clientY };
+      lastPointerTime = performance.now();
+      rope.vx = 0; rope.vy = 0;
+      if (cardHanger && cardHanger.setPointerCapture && e.pointerId !== undefined) {
+        try { cardHanger.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+      if (e.preventDefault) e.preventDefault();
+    }
+
+    function onDragMove(e) {
+      if (!isDragging) return;
+      let nx = dragStartRope.x + (e.clientX - dragStartPointer.x);
+      let ny = dragStartRope.y + (e.clientY - dragStartPointer.y);
+
+      const dist = Math.hypot(nx, ny);
+      if (dist > MAX_ROPE) {
+        const s = MAX_ROPE / dist;
+        nx *= s; ny *= s;
+      }
+      rope.x = nx;
+      rope.y = ny;
+
+      // Estimate throw velocity (px per 60fps frame)
+      const now = performance.now();
+      const dt = Math.max(1, now - lastPointerTime);
+      rope.vx = (e.clientX - lastPointer.x) / dt * 16;
+      rope.vy = (e.clientY - lastPointer.y) / dt * 16;
+      lastPointer = { x: e.clientX, y: e.clientY };
+      lastPointerTime = now;
+      if (e.preventDefault) e.preventDefault();
+    }
+
+    function onDragEnd(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      isHovering = false;
+      document.body.classList.remove('is-dragging');
+      // Cap the throw velocity so releasing never flings the badge too hard
+      const speed = Math.hypot(rope.vx, rope.vy);
+      const MAX_VEL = 45;
+      if (speed > MAX_VEL) {
+        rope.vx *= MAX_VEL / speed;
+        rope.vy *= MAX_VEL / speed;
+      }
+      if (cardHanger && cardHanger.releasePointerCapture && e.pointerId !== undefined) {
+        try { cardHanger.releasePointerCapture(e.pointerId); } catch (_) {}
+      }
+    }
+
+    if (cardHanger) {
+      cardHanger.addEventListener('pointerdown', onDragStart);
+    }
+    window.addEventListener('pointermove', onDragMove);
+    window.addEventListener('pointerup', onDragEnd);
+    window.addEventListener('pointercancel', onDragEnd);
+
+    // Reset Tilt / Rope Button
+    btnResetTilt.addEventListener('click', () => {
+      targetTiltX = 0;
+      targetTiltY = 0;
+      currentTiltX = 0;
+      currentTiltY = 0;
+      cardHanger.style.transform = 'rotateX(0deg) rotateY(0deg) rotateZ(0deg)';
+      rope.x = 0; rope.y = 0; rope.vx = 0; rope.vy = 0;
+    });
+
+    // LIVE EDITOR DRAWER OPEN / CLOSE
+    function openEditor() {
+      if (!editorPanel || !editorBackdrop) return;
+      editorBackdrop.classList.remove('hidden');
+      editorPanel.classList.remove('translate-x-full', 'pointer-events-none');
+      editorPanel.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeEditor() {
+      if (!editorPanel || !editorBackdrop) return;
+      editorBackdrop.classList.add('hidden');
+      editorPanel.classList.add('translate-x-full', 'pointer-events-none');
+      editorPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    // ============ LIVE EDITOR SECURITY (6-DIGIT PIN) ============
+    // Best-effort client-side protection: PIN is never stored as plaintext
+    // (only a salted SHA-256 hash), with attempt limiting + temporary lockout.
+    const AUTH_KEY = 'myporto.editor.auth.v1';
+    const LOCK_KEY = 'myporto.editor.lock.v1';
+    const MAX_ATTEMPTS = 5;
+    const BASE_LOCK_MS = 30000; // 30s, doubling per extra failure
+
+    // Pre-computed salted hashes for the default credentials (no plaintext in source)
+    const DEFAULT_AUTH = {
+      v: 1,
+      salt: 'a688df42e3817e85f15c9c9234304d49',
+      pinHash: 'd70f040b7bb3dfcc580475af711bbfd03c48ff313d3a5a672a8477a155092fd4',
+      foodHash: '2b4e9dce9a857bc364331c0b649765fe71483f208c8060596a385f0582595602',
+      animalHash: '4c2922f7f04cf5819599603eccf05a494d24e45412a548f2e603dc5790c8f18b'
+    };
+
+    // Compact pure-JS SHA-256 (works on file:// where crypto.subtle may be absent)
+    function sha256(ascii) {
+      function rr(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+      var mathPow = Math.pow, maxWord = mathPow(2, 32), lp = 'length';
+      var i, j, result = '';
+      var words = [], bitLen = ascii[lp] * 8;
+      var hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [], pc = k[lp];
+      var isComposite = {};
+      for (var candidate = 2; pc < 64; candidate++) {
+        if (!isComposite[candidate]) {
+          for (i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }
+          hash[pc] = (mathPow(candidate, .5) * maxWord) | 0;
+          k[pc++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+        }
+      }
+      ascii += '\x80';
+      while (ascii[lp] % 64 - 56) ascii += '\x00';
+      for (i = 0; i < ascii[lp]; i++) {
+        j = ascii.charCodeAt(i);
+        if (j >> 8) return '';
+        words[i >> 2] |= j << ((3 - i) % 4) * 8;
+      }
+      words[words[lp]] = ((bitLen / maxWord) | 0);
+      words[words[lp]] = (bitLen);
+      for (j = 0; j < words[lp];) {
+        var w = words.slice(j, j += 16);
+        var oldHash = hash;
+        hash = hash.slice(0, 8);
+        for (i = 0; i < 64; i++) {
+          var w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4];
+          var t1 = hash[7]
+            + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25))
+            + ((e & hash[5]) ^ ((~e) & hash[6]))
+            + k[i]
+            + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+          var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+          hash = [(t1 + t2) | 0].concat(hash);
+          hash[4] = (hash[4] + t1) | 0;
+        }
+        for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i]) | 0; }
+      }
+      for (i = 0; i < 8; i++) {
+        for (j = 3; j + 1; j--) {
+          var b = (hash[i] >> (j * 8)) & 255;
+          result += ((b < 16) ? '0' : '') + b.toString(16);
+        }
+      }
+      return result;
+    }
+
+    function randSalt() {
+      var a = new Uint8Array(16);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
+      else for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
+      return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+    }
+    function normalizeAnswer(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
+    function hashPin(pin, salt) { return sha256(salt + ':' + String(pin)); }
+    function hashAnswer(ans, salt) { return sha256(salt + ':ans:' + normalizeAnswer(ans)); }
+
+    function loadAuth() {
+      try {
+        var raw = localStorage.getItem(AUTH_KEY);
+        if (raw) {
+          var o = JSON.parse(raw);
+          if (o && o.salt && o.pinHash) return o;
+        }
+      } catch (_) {}
+      return JSON.parse(JSON.stringify(DEFAULT_AUTH));
+    }
+    function saveAuth(o) { try { localStorage.setItem(AUTH_KEY, JSON.stringify(o)); } catch (_) {} }
+
+    function loadLock() {
+      try { var o = JSON.parse(localStorage.getItem(LOCK_KEY) || '{}'); return { fails: Number(o.fails) || 0, until: Number(o.until) || 0 }; }
+      catch (_) { return { fails: 0, until: 0 }; }
+    }
+    function saveLock(o) { try { localStorage.setItem(LOCK_KEY, JSON.stringify(o)); } catch (_) {} }
+    function lockRemaining() { var d = loadLock().until - Date.now(); return d > 0 ? d : 0; }
+    function registerFail() {
+      var l = loadLock();
+      l.fails++;
+      if (l.fails >= MAX_ATTEMPTS) {
+        var extra = l.fails - MAX_ATTEMPTS + 1;
+        l.until = Date.now() + BASE_LOCK_MS * Math.pow(2, extra - 1);
+      }
+      saveLock(l);
+      return l;
+    }
+    function resetFails() { saveLock({ fails: 0, until: 0 }); }
+
+    // Timestamp of the last successful unlock (used only to gate the editor in-page)
+    let editorUnlocked = false;
+    let editorAuth = loadAuth();
+
+    const pinGate = document.getElementById('pin-gate');
+    const pinBackdrop = document.getElementById('pin-backdrop');
+    const pinClose = document.getElementById('pin-close');
+    const pinInput = document.getElementById('pin-input');
+    const pinError = document.getElementById('pin-error');
+    const pinSubmit = document.getElementById('pin-submit');
+    const pinSteps = {
+      unlock: document.getElementById('pin-step-unlock'),
+      clue: document.getElementById('pin-step-clue'),
+      new: document.getElementById('pin-step-new')
+    };
+    let lockTicker = null;
+
+    function showPinStep(name) {
+      Object.keys(pinSteps).forEach((k) => {
+        if (pinSteps[k]) pinSteps[k].classList.toggle('hidden', k !== name);
+      });
+      const t = document.getElementById('pin-title');
+      const s = document.getElementById('pin-subtitle');
+      if (t) t.textContent = name === 'new' ? 'SANDI BARU' : 'LIVE EDITOR TERKUNCI';
+      if (s) s.textContent = name === 'clue' ? 'Verifikasi pertanyaan keamanan' : (name === 'new' ? 'Tetapkan 6 digit angka baru' : 'Masukkan 6 digit sandi angka');
+    }
+    function setErr(el, msg) { if (!el) return; if (msg) { el.textContent = msg; el.classList.remove('hidden'); } else { el.textContent = ''; el.classList.add('hidden'); } }
+
+    function applyLockUI() {
+      var rem = lockRemaining();
+      if (rem > 0) {
+        if (pinInput) pinInput.disabled = true;
+        if (pinSubmit) { pinSubmit.disabled = true; pinSubmit.classList.add('opacity-50', 'pointer-events-none'); }
+        setErr(pinError, 'Terkunci. Coba lagi dalam ' + Math.ceil(rem / 1000) + ' detik.');
+        if (!lockTicker) {
+          lockTicker = setInterval(function () {
+            var r = lockRemaining();
+            if (r <= 0) {
+              clearInterval(lockTicker); lockTicker = null;
+              if (pinInput) pinInput.disabled = false;
+              if (pinSubmit) { pinSubmit.disabled = false; pinSubmit.classList.remove('opacity-50', 'pointer-events-none'); }
+              setErr(pinError, '');
+            } else {
+              setErr(pinError, 'Terkunci. Coba lagi dalam ' + Math.ceil(r / 1000) + ' detik.');
+            }
+          }, 1000);
+        }
+      } else {
+        if (pinInput) pinInput.disabled = false;
+        if (pinSubmit) { pinSubmit.disabled = false; pinSubmit.classList.remove('opacity-50', 'pointer-events-none'); }
+      }
+    }
+
+    function openPinGate() {
+      if (!pinGate) { openEditor(); return; }
+      pinGate.classList.remove('hidden');
+      pinGate.classList.add('flex');
+      pinGate.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      showPinStep('unlock');
+      if (pinInput) pinInput.value = '';
+      setErr(pinError, '');
+      applyLockUI();
+      setTimeout(function () { if (pinInput && !pinInput.disabled) pinInput.focus(); }, 60);
+      if (window.lucide && lucide.createIcons) lucide.createIcons();
+    }
+    function closePinGate() {
+      if (!pinGate) return;
+      pinGate.classList.add('hidden');
+      pinGate.classList.remove('flex');
+      pinGate.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function submitUnlock() {
+      if (lockRemaining() > 0) { applyLockUI(); return; }
+      var v = (pinInput ? pinInput.value : '').replace(/\D/g, '');
+      if (v.length !== 6) { setErr(pinError, 'Sandi harus tepat 6 digit angka.'); return; }
+      if (hashPin(v, editorAuth.salt) === editorAuth.pinHash) {
+        resetFails();
+        editorUnlocked = true;
+        if (pinInput) pinInput.value = '';
+        closePinGate();
+        openEditor();
+      } else {
+        var l = registerFail();
+        if (pinInput) pinInput.value = '';
+        if (l.until > Date.now()) { applyLockUI(); }
+        else { setErr(pinError, 'Sandi salah. Sisa percobaan: ' + Math.max(0, MAX_ATTEMPTS - l.fails) + '.'); }
+      }
+    }
+
+    function submitClue() {
+      var f = document.getElementById('clue-food');
+      var a = document.getElementById('clue-animal');
+      var fe = document.getElementById('clue-error');
+      if (hashAnswer(f && f.value, editorAuth.salt) === editorAuth.foodHash &&
+          hashAnswer(a && a.value, editorAuth.salt) === editorAuth.animalHash) {
+        resetFails();
+        setErr(fe, '');
+        if (f) f.value = ''; if (a) a.value = '';
+        var pn = document.getElementById('pin-new');
+        var pn2 = document.getElementById('pin-new2');
+        if (pn) pn.value = ''; if (pn2) pn2.value = '';
+        setErr(document.getElementById('new-error'), '');
+        showPinStep('new');
+        setTimeout(function () { if (pn) pn.focus(); }, 60);
+      } else {
+        registerFail();
+        setErr(fe, 'Jawaban keamanan salah.');
+      }
+    }
+
+    function submitNewPin() {
+      var pn = document.getElementById('pin-new');
+      var pn2 = document.getElementById('pin-new2');
+      var ne = document.getElementById('new-error');
+      var p = (pn ? pn.value : '').replace(/\D/g, '');
+      var p2 = (pn2 ? pn2.value : '').replace(/\D/g, '');
+      if (p.length !== 6) { setErr(ne, 'Sandi harus tepat 6 digit angka.'); return; }
+      if (p !== p2) { setErr(ne, 'Konfirmasi sandi tidak cocok.'); return; }
+      editorAuth = Object.assign({}, editorAuth, { pinHash: hashPin(p, editorAuth.salt) });
+      saveAuth(editorAuth);
+      resetFails();
+      if (pn) pn.value = ''; if (pn2) pn2.value = '';
+      showPinStep('unlock');
+      if (pinInput) pinInput.value = '';
+      setErr(pinError, '');
+      var ok = document.getElementById('pin-subtitle');
+      if (ok) ok.textContent = 'Sandi berhasil diganti. Masukkan sandi baru Anda.';
+    }
+
+    if (btnOpenEditor) btnOpenEditor.addEventListener('click', function () {
+      if (editorUnlocked) openEditor(); else openPinGate();
+    });
+    if (btnCloseEditor) btnCloseEditor.addEventListener('click', closeEditor);
+    if (editorBackdrop) editorBackdrop.addEventListener('click', closeEditor);
+    if (pinClose) pinClose.addEventListener('click', closePinGate);
+    if (pinBackdrop) pinBackdrop.addEventListener('click', closePinGate);
+    if (pinSubmit) pinSubmit.addEventListener('click', submitUnlock);
+    if (pinInput) {
+      pinInput.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        if (this.value.length === 6 && lockRemaining() <= 0) submitUnlock();
+      });
+      pinInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitUnlock(); });
+    }
+    var pnEl = document.getElementById('pin-new');
+    var pn2El = document.getElementById('pin-new2');
+    [pnEl, pn2El].forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 6); });
+      el.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitNewPin(); });
+    });
+    var clueSubmit = document.getElementById('clue-submit');
+    var clueBack = document.getElementById('clue-back');
+    var gotoClue = document.getElementById('pin-goto-clue');
+    var newSubmit = document.getElementById('new-submit');
+    var newBack = document.getElementById('new-back');
+    if (clueSubmit) clueSubmit.addEventListener('click', submitClue);
+    if (newSubmit) newSubmit.addEventListener('click', submitNewPin);
+    if (clueBack) clueBack.addEventListener('click', function () { showPinStep('unlock'); setErr(document.getElementById('clue-error'), ''); });
+    if (newBack) newBack.addEventListener('click', function () { showPinStep('unlock'); setErr(document.getElementById('new-error'), ''); });
+    if (gotoClue) gotoClue.addEventListener('click', function () {
+      showPinStep('clue');
+      var f = document.getElementById('clue-food');
+      setErr(document.getElementById('clue-error'), '');
+      if (f) setTimeout(function () { f.focus(); }, 60);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (pinGate && !pinGate.classList.contains('hidden')) { closePinGate(); return; }
+        closeEditor();
+      }
+    });
+
+    // 2. 3D FLIP CARD FUNCTIONALITY
+    function toggleFlip() {
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        cardFlipper.classList.add('is-flipped');
+        btnPanelFlipText.textContent = "PUTAR KARTU (LIHAT SISI DEPAN)";
+      } else {
+        cardFlipper.classList.remove('is-flipped');
+        btnPanelFlipText.textContent = "PUTAR KARTU (LIHAT SISI BELAKANG)";
+      }
+    }
+
+    btnQuickFlip.addEventListener('click', toggleFlip);
+    btnPanelFlip.addEventListener('click', toggleFlip);
+
+    // ================= STATE, PERSISTENCE & WORK EXPERIENCE =================
+    const STORAGE_KEY = 'myporto.state.v1';
+
+    const DEFAULT_EXPERIENCES = [
+      {
+        role: "Senior Frontend Engineer",
+        company: "CyberDynamics Lab",
+        period: "2022 — Sekarang",
+        description: "Memimpin tim 6 engineer membangun platform analitik real-time, menurunkan waktu render dashboard hingga 40% melalui arsitektur micro-frontend dan optimasi WebGL.",
+        image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        role: "Fullstack Developer",
+        company: "Nusantara Fintech",
+        period: "2019 — 2022",
+        description: "Merancang dan merilis API pembayaran berlatensi rendah yang melayani 2 juta+ transaksi harian, dengan fokus pada keamanan dan skalabilitas cloud.",
+        image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        role: "Web Developer",
+        company: "Studio Kreatif Digital",
+        period: "2017 — 2019",
+        description: "Mengembangkan puluhan situs interaktif untuk klien agensi, mengubah desain menjadi pengalaman web responsif yang cepat dan aksesibel.",
+        image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80"
+      }
+    ];
+
+    // Capture initial values straight from the rendered DOM
+    let appState = {
+      light: document.documentElement.classList.contains('light'),
+      theme: { key: 'cyan', name: 'Electric Cyan', neon: '#00f0ff', glow: 'rgba(0, 240, 255, 0.45)', dim: 'rgba(0, 240, 255, 0.12)' },
+      card: {
+        name: inputName.value,
+        role: inputRole.value,
+        org: inputOrg.value,
+        id: inputId.value,
+        bio: inputBio.value,
+        avatar: cardAvatar.src
+      },
+      experiences: JSON.parse(JSON.stringify(DEFAULT_EXPERIENCES))
+    };
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (err) {
+        // Storage quota exceeded (usually caused by embedded base64 images)
+        try {
+          const slim = JSON.parse(JSON.stringify(appState));
+          if (slim.card.avatar && slim.card.avatar.indexOf('data:') === 0) slim.card.avatar = '';
+          slim.experiences = slim.experiences.map(x => ({
+            ...x,
+            image: x.image && x.image.indexOf('data:') === 0 ? '' : x.image
+          }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+        } catch (_) {
+          console.warn('Tidak dapat menyimpan ke localStorage.', err);
+        }
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved.card) appState.card = { ...appState.card, ...saved.card };
+        if (saved.theme) appState.theme = { ...appState.theme, ...saved.theme };
+        if (typeof saved.light === 'boolean') appState.light = saved.light;
+        if (Array.isArray(saved.experiences)) appState.experiences = saved.experiences;
+      } catch (err) {
+        console.warn('Gagal memuat state tersimpan.', err);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function downscaleImage(file, maxSize) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            if (width > height && width > maxSize) {
+              height = Math.round(height * maxSize / width);
+              width = maxSize;
+            } else if (height > maxSize) {
+              width = Math.round(width * maxSize / height);
+              height = maxSize;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          };
+          img.onerror = () => resolve(e.target.result);
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // 3. LIVE EDITOR: TWO-WAY REALTIME TEXT SYNC + PERSISTENCE
+    inputName.addEventListener('input', (e) => {
+      appState.card.name = e.target.value;
+      cardDisplayName.textContent = e.target.value || "Alvitho Sipayung";
+      saveState();
+    });
+
+    inputRole.addEventListener('input', (e) => {
+      appState.card.role = e.target.value;
+      cardDisplayRole.textContent = e.target.value || "Lead Fullstack Architect";
+      saveState();
+    });
+
+    inputOrg.addEventListener('input', (e) => {
+      appState.card.org = e.target.value;
+      cardDisplayOrg.textContent = e.target.value || "CyberDynamics Lab • Tech University";
+      saveState();
+    });
+
+    inputId.addEventListener('input', (e) => {
+      appState.card.id = e.target.value;
+      cardDisplayId.textContent = e.target.value || "CY-98420-X";
+      saveState();
+    });
+
+    inputBio.addEventListener('input', (e) => {
+      appState.card.bio = e.target.value;
+      cardDisplayBio.textContent = e.target.value || "Bio singkat pengembang sistem...";
+      saveState();
+    });
+
+    // 4. PHOTO UPLOAD & RANDOM AVATAR
+    inputAvatarFile.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const dataUrl = await downscaleImage(file, 400);
+      cardAvatar.src = dataUrl;
+      appState.card.avatar = dataUrl;
+      saveState();
+    });
+
+    const randomAvatars = [
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=600&q=80"
+    ];
+
+    btnRandomAvatar.addEventListener('click', () => {
+      const randomIdx = Math.floor(Math.random() * randomAvatars.length);
+      cardAvatar.src = randomAvatars[randomIdx];
+      appState.card.avatar = cardAvatar.src;
+      saveState();
+    });
+
+    // 5. DYNAMIC THEME COLOR ENGINE
+    const themeMeta = {
+      cyan: { name: "Electric Cyan", neon: "#00f0ff", glow: "rgba(0, 240, 255, 0.45)", dim: "rgba(0, 240, 255, 0.12)" },
+      purple: { name: "Cyber Purple", neon: "#b026ff", glow: "rgba(176, 38, 255, 0.45)", dim: "rgba(176, 38, 255, 0.12)" },
+      emerald: { name: "Emerald Neon", neon: "#00ff9d", glow: "rgba(0, 255, 157, 0.45)", dim: "rgba(0, 255, 157, 0.12)" },
+      sunset: { name: "Sunset Crimson", neon: "#ff3366", glow: "rgba(255, 51, 102, 0.45)", dim: "rgba(255, 51, 102, 0.12)" },
+      gold: { name: "Cyber Gold", neon: "#ffd000", glow: "rgba(255, 208, 0, 0.45)", dim: "rgba(255, 208, 0, 0.12)" }
+    };
+
+    function applyTheme(themeKey) {
+      const theme = themeMeta[themeKey];
+      if (!theme) return;
+
+      document.documentElement.style.setProperty('--primary-neon', theme.neon);
+      document.documentElement.style.setProperty('--primary-glow', theme.glow);
+      document.documentElement.style.setProperty('--primary-dim', theme.dim);
+
+      activeThemeLabel.textContent = theme.name;
+      activeThemeLabel.style.color = theme.neon;
+
+      if (orb1) {
+        orb1.style.backgroundColor = theme.neon;
+      }
+
+      themeButtons.forEach(b => {
+        const match = b.getAttribute('data-theme') === themeKey;
+        b.classList.toggle('ring-2', match);
+        b.classList.toggle('ring-white', match);
+      });
+
+      appState.theme = { key: themeKey, ...theme };
+    }
+
+    themeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyTheme(btn.getAttribute('data-theme'));
+        saveState();
+      });
+    });
+
+    // 6. LIGHT / DARK MODE TOGGLE
+    function setMode(isLight, silent) {
+      const root = document.documentElement;
+      root.classList.toggle('light', isLight);
+      root.classList.toggle('dark', !isLight);
+      appState.light = isLight;
+
+      if (themeToggleIcon) {
+        themeToggleIcon.innerHTML = '<i class="w-3.5 h-3.5" data-lucide="' + (isLight ? 'sun' : 'moon') + '"></i>';
+        lucide.createIcons();
+      }
+
+      if (!silent) saveState();
+    }
+
+    btnThemeToggle.addEventListener('click', () => setMode(!appState.light));
+
+    // 7. WORK EXPERIENCE: PREVIEW RENDERER
+    function renderExperiences() {
+      if (!experienceList) return;
+
+      if (!appState.experiences.length) {
+        experienceList.innerHTML = '<p class="text-xs font-mono text-gray-500 text-center py-6">Belum ada pengalaman kerja. Tambahkan melalui panel Live Editor.</p>';
+        return;
+      }
+
+      experienceList.innerHTML = appState.experiences.map((exp, index) => {
+        const media = exp.image
+          ? '<button class="exp-media group/media relative w-full h-full block" data-lightbox-index="' + index + '" title="Klik untuk memperbesar" type="button">' +
+              '<img alt="' + escapeHtml(exp.role || 'Pengalaman kerja') + '" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="' + escapeHtml(exp.image) + '"/>' +
+              '<span class="absolute inset-0 bg-black/0 group-hover/media:bg-black/45 transition flex items-center justify-center opacity-0 group-hover/media:opacity-100">' +
+                '<span class="w-11 h-11 rounded-full bg-white/15 border border-white/30 flex items-center justify-center text-white backdrop-blur-sm"><i class="w-5 h-5" data-lucide="maximize-2"></i></span>' +
+              '</span>' +
+              '<span class="absolute left-2 bottom-2 text-[10px] font-mono text-white bg-black/60 px-2 py-0.5 rounded opacity-0 group-hover/media:opacity-100 transition flex items-center gap-1"><i class="w-3 h-3" data-lucide="zoom-in"></i>Perbesar</span>' +
+            '</button>'
+          : '<div class="w-full h-full min-h-[120px] flex items-center justify-center text-gray-500"><i class="w-8 h-8" data-lucide="image-off"></i></div>';
+        return '' +
+          '<article class="glass-panel rounded-2xl overflow-hidden border border-white/10 hover:border-neon transition flex flex-col sm:flex-row group">' +
+            '<div class="sm:w-56 h-44 sm:h-auto shrink-0 overflow-hidden bg-obsidian-surface">' + media + '</div>' +
+            '<div class="p-5 space-y-2 flex-1">' +
+              '<div class="flex items-center justify-between gap-2 text-xs font-mono text-gray-400">' +
+                '<span class="text-neon font-semibold">' + escapeHtml(exp.company) + '</span>' +
+                '<span class="whitespace-nowrap">' + escapeHtml(exp.period) + '</span>' +
+              '</div>' +
+              '<h3 class="text-lg font-bold text-white">' + escapeHtml(exp.role) + '</h3>' +
+              '<p class="text-xs text-gray-400 leading-relaxed">' + escapeHtml(exp.description) + '</p>' +
+            '</div>' +
+          '</article>';
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // 8. WORK EXPERIENCE: EDITOR
+    function renderExpEditor() {
+      if (!expEditorList) return;
+
+      expEditorList.innerHTML = appState.experiences.map((exp, index) => {
+        const inputCls = 'w-full px-3 py-2 rounded-lg bg-obsidian-surface border border-white/15 text-white text-xs focus:outline-none focus:border-neon';
+        return '' +
+          '<div class="p-3 rounded-xl bg-black/20 border border-white/10 space-y-2" data-index="' + index + '">' +
+            '<div class="flex items-center justify-between">' +
+              '<span class="text-[10px] font-mono text-gray-400 uppercase tracking-wider">Entri #' + (index + 1) + '</span>' +
+              '<button class="text-gray-400 hover:text-rose-400 transition" data-remove="' + index + '" title="Hapus entri"><i class="w-4 h-4" data-lucide="trash-2"></i></button>' +
+            '</div>' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
+              '<input class="' + inputCls + ' font-sans" data-field="role" placeholder="Jabatan / Peran" type="text" value="' + escapeHtml(exp.role) + '"/>' +
+              '<input class="' + inputCls + ' font-sans" data-field="company" placeholder="Perusahaan" type="text" value="' + escapeHtml(exp.company) + '"/>' +
+            '</div>' +
+            '<input class="' + inputCls + ' font-mono" data-field="period" placeholder="Periode (mis. 2022 - Sekarang)" type="text" value="' + escapeHtml(exp.period) + '"/>' +
+            '<textarea class="' + inputCls + ' font-sans" data-field="description" placeholder="Deskripsi pekerjaan" rows="2">' + escapeHtml(exp.description) + '</textarea>' +
+            '<div class="flex items-center gap-2">' +
+              '<label class="cursor-pointer px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-[11px] font-mono text-gray-300 hover:text-white transition flex items-center gap-1.5 shrink-0">' +
+                '<i class="w-3.5 h-3.5 text-neon" data-lucide="upload"></i><span>Upload</span>' +
+                '<input accept="image/*" class="hidden" data-field="imageFile" type="file"/>' +
+              '</label>' +
+              '<input class="w-full px-3 py-2 rounded-lg bg-obsidian-surface border border-white/15 text-white text-[11px] font-mono focus:outline-none focus:border-neon" data-field="image" placeholder="atau tempel URL gambar" type="text" value="' + escapeHtml(exp.image && exp.image.indexOf('data:') === 0 ? '' : exp.image) + '"/>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    if (btnAddExp) {
+      btnAddExp.addEventListener('click', () => {
+        appState.experiences.push({ role: '', company: '', period: '', description: '', image: '' });
+        renderExpEditor();
+        renderExperiences();
+        saveState();
+        const last = expEditorList.lastElementChild;
+        if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    if (expEditorList) {
+      expEditorList.addEventListener('input', (e) => {
+        const field = e.target.getAttribute('data-field');
+        if (!field || field === 'imageFile') return;
+        const row = e.target.closest('[data-index]');
+        if (!row) return;
+        const idx = Number(row.getAttribute('data-index'));
+        if (!appState.experiences[idx]) return;
+        appState.experiences[idx][field] = e.target.value;
+        renderExperiences();
+        saveState();
+      });
+
+      expEditorList.addEventListener('change', async (e) => {
+        if (e.target.getAttribute('data-field') !== 'imageFile') return;
+        const file = e.target.files[0];
+        if (!file) return;
+        const row = e.target.closest('[data-index]');
+        if (!row) return;
+        const idx = Number(row.getAttribute('data-index'));
+        const dataUrl = await downscaleImage(file, 800);
+        appState.experiences[idx].image = dataUrl;
+        renderExpEditor();
+        renderExperiences();
+        saveState();
+      });
+
+      expEditorList.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove]');
+        if (!btn) return;
+        const idx = Number(btn.getAttribute('data-remove'));
+        appState.experiences.splice(idx, 1);
+        renderExpEditor();
+        renderExperiences();
+        saveState();
+      });
+    }
+
+    // 8b. WORK EXPERIENCE: IMAGE LIGHTBOX
+    function setupLightbox() {
+      const lightbox = document.getElementById('image-lightbox');
+      const lightboxImg = document.getElementById('lightbox-img');
+      const lightboxCaption = document.getElementById('lightbox-caption');
+      const lightboxBackdrop = document.getElementById('lightbox-backdrop');
+      const lightboxClose = document.getElementById('lightbox-close');
+      if (!lightbox || !lightboxImg) return;
+
+      function openLightbox(src, caption) {
+        if (!src) return;
+        lightboxImg.src = src;
+        if (lightboxCaption) lightboxCaption.textContent = caption || '';
+        lightbox.classList.remove('hidden');
+        lightbox.classList.add('flex');
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => lightbox.classList.add('is-open'));
+      }
+
+      function closeLightbox() {
+        lightbox.classList.remove('is-open');
+        lightbox.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        window.setTimeout(() => {
+          lightbox.classList.add('hidden');
+          lightbox.classList.remove('flex');
+          lightboxImg.removeAttribute('src');
+        }, 200);
+      }
+
+      if (experienceList) {
+        experienceList.addEventListener('click', (e) => {
+          const trigger = e.target.closest('[data-lightbox-index]');
+          if (!trigger) return;
+          const idx = Number(trigger.getAttribute('data-lightbox-index'));
+          const exp = appState.experiences[idx];
+          if (exp && exp.image) {
+            const caption = [exp.role, exp.company].filter(Boolean).join(' • ');
+            openLightbox(exp.image, caption);
+          }
+        });
+      }
+
+      if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+      if (lightboxBackdrop) lightboxBackdrop.addEventListener('click', closeLightbox);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) closeLightbox();
+      });
+    }
+
+    // 8c. ANIMATED CYBERPUNK PARTICLE BACKGROUND
+    function setupCyberBackground() {
+      const canvas = document.getElementById('cyber-canvas');
+      if (!canvas || !canvas.getContext) return;
+      const ctx = canvas.getContext('2d');
+      const DPR = Math.min(window.devicePixelRatio || 1, 2);
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let w = 0, h = 0, particles = [], rafId = null, linkPx = 150;
+
+      function neonRgb() {
+        let col = '#00f0ff';
+        try {
+          const v = getComputedStyle(document.documentElement).getPropertyValue('--primary-neon').trim();
+          if (v) col = v;
+        } catch (_) {}
+        const m = /^#?([0-9a-f]{6})$/i.exec(col);
+        if (m) {
+          const n = parseInt(m[1], 16);
+          return ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255);
+        }
+        const rgb = /rgba?\(([^)]+)\)/.exec(col);
+        return rgb ? rgb[1].split(',').slice(0, 3).join(',') : '0,240,255';
+      }
+
+      function resize() {
+        w = canvas.width = Math.floor(window.innerWidth * DPR);
+        h = canvas.height = Math.floor(window.innerHeight * DPR);
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        linkPx = 150 * DPR;
+        const count = Math.max(28, Math.min(90, Math.floor(window.innerWidth / 24)));
+        particles = Array.from({ length: count }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.45 * DPR,
+          vy: (Math.random() - 0.5) * 0.45 * DPR,
+          r: (Math.random() * 1.7 + 0.7) * DPR
+        }));
+      }
+
+      function frame() {
+        ctx.clearRect(0, 0, w, h);
+        const rgb = neonRgb();
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx); }
+          else if (p.x > w) { p.x = w; p.vx = -Math.abs(p.vx); }
+          if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy); }
+          else if (p.y > h) { p.y = h; p.vy = -Math.abs(p.vy); }
+
+          for (let j = i + 1; j < particles.length; j++) {
+            const q = particles[j];
+            const dx = p.x - q.x, dy = p.y - q.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < linkPx * linkPx) {
+              const a = (1 - Math.sqrt(d2) / linkPx) * 0.35;
+              ctx.strokeStyle = 'rgba(' + rgb + ',' + a.toFixed(3) + ')';
+              ctx.lineWidth = DPR;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(q.x, q.y);
+              ctx.stroke();
+            }
+          }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + rgb + ',0.7)';
+          ctx.fill();
+        }
+        rafId = requestAnimationFrame(frame);
+      }
+
+      function start() {
+        if (rafId != null) return;
+        resize();
+        frame();
+      }
+      function stop() {
+        if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
+      }
+
+      resize();
+      if (!prefersReduced) frame();
+
+      window.addEventListener('resize', () => {
+        window.clearTimeout(canvas._rz);
+        canvas._rz = window.setTimeout(resize, 150);
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stop(); else if (!prefersReduced) start();
+      });
+    }
+
+    // 9. APPLY SAVED STATE ON LOAD
+    function applyStateToDOM() {
+      const c = appState.card;
+      inputName.value = c.name;
+      inputRole.value = c.role;
+      inputOrg.value = c.org;
+      inputId.value = c.id;
+      inputBio.value = c.bio;
+      cardDisplayName.textContent = c.name || "Alvitho Sipayung";
+      cardDisplayRole.textContent = c.role || "Lead Fullstack Architect";
+      cardDisplayOrg.textContent = c.org || "CyberDynamics Lab • Tech University";
+      cardDisplayId.textContent = c.id || "CY-98420-X";
+      cardDisplayBio.textContent = c.bio || "Bio singkat pengembang sistem...";
+      if (c.avatar) cardAvatar.src = c.avatar;
+
+      applyTheme((appState.theme && appState.theme.key) || 'cyan');
+      renderExperiences();
+      renderExpEditor();
+      setMode(!!appState.light, true);
+
+      const yearEl = document.getElementById('footer-year');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
+    }
+
+    loadState();
+    applyStateToDOM();
+    setupLightbox();
+    setupCyberBackground();
+  </script>
+</body>
+</html>
