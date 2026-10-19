@@ -1260,6 +1260,8 @@
       editorBackdrop.classList.add('hidden');
       editorPanel.classList.add('translate-x-full', 'pointer-events-none');
       editorPanel.setAttribute('aria-hidden', 'true');
+      // Re-lock on exit: the next time the editor is opened, the PIN is required again.
+      editorUnlocked = false;
     }
 
     // ============ LIVE EDITOR SECURITY (6-DIGIT PIN) ============
@@ -2076,3 +2078,4 @@
   </script>
 </body>
 </html>
+Update otomatis ke-
